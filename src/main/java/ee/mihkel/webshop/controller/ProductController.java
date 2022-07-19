@@ -82,6 +82,7 @@ public class ProductController {
 
     @PatchMapping("increase-stock")
     public List<Product> increaseStock(@RequestBody Product product) {
+        // võtame tabelist vana Stocki, mitte Body-st Stocki kui ühe juurde liidame
         int newStock = product.getStock()+1;
         product.setStock(newStock);
         productRepository.save(product);
