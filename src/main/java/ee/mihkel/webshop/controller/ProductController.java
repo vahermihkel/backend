@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
-@CrossOrigin("http://localhost:3000")
 @RestController
 public class ProductController {
 //    List<Product> products = new ArrayList<>();
