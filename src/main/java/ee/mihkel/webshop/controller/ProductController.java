@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 
+@CrossOrigin(origins = "https://mihkel-react.herokuapp.com/")
 @RestController
 public class ProductController {
 //    List<Product> products = new ArrayList<>();
