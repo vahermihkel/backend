@@ -5,12 +5,15 @@ import ee.mihkel.webshop.model.Order;
 import ee.mihkel.webshop.model.PaymentStatus;
 import ee.mihkel.webshop.model.Person;
 import ee.mihkel.webshop.model.Product;
+import ee.mihkel.webshop.model.request.CheckPaymentData;
 import ee.mihkel.webshop.model.request.EveryPayData;
 import ee.mihkel.webshop.model.request.EveryPayLink;
+import ee.mihkel.webshop.model.request.EveryPayMessage;
 import ee.mihkel.webshop.repository.OrderRepository;
 import ee.mihkel.webshop.repository.PersonRepository;
 import ee.mihkel.webshop.repository.ProductRepository;
 import ee.mihkel.webshop.service.OrderService;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @RestController
+@Log4j2
 public class OrderController {
 
     @Autowired
@@ -42,6 +46,7 @@ public class OrderController {
     public EveryPayLink payment(@PathVariable String personCode, @RequestBody List<Product> products) throws RuntimeException  {
 
         List<Product> originalProducts = orderService.getOriginalProducts(products);
+        log.info(originalProducts);
         double orderSum = orderService.calculateOrderSum(originalProducts);
         Long orderId = orderService.saveOrder(originalProducts, orderSum, personCode);
 
@@ -50,6 +55,13 @@ public class OrderController {
         everyPayLink.setLink(paymentLink);
 
         return everyPayLink;
+    }
+
+    @PostMapping("check-payment")
+    public EveryPayMessage checkPayment(@RequestBody CheckPaymentData checkPaymentData) {
+        EveryPayMessage everyPayMessage = orderService.checkPaymentStatus(checkPaymentData);
+        orderService.changeOrderPaymentStatus(everyPayMessage, checkPaymentData.getOrder_reference());
+        return everyPayMessage;
     }
 
     @GetMapping("order")

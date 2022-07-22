@@ -6,10 +6,13 @@ import ee.mihkel.webshop.model.Order;
 import ee.mihkel.webshop.model.PaymentStatus;
 import ee.mihkel.webshop.model.Person;
 import ee.mihkel.webshop.model.Product;
+import ee.mihkel.webshop.model.request.CheckPaymentData;
 import ee.mihkel.webshop.model.request.EveryPayData;
+import ee.mihkel.webshop.model.request.EveryPayMessage;
 import ee.mihkel.webshop.model.request.EveryPayResponse;
 import ee.mihkel.webshop.repository.OrderRepository;
 import ee.mihkel.webshop.repository.PersonRepository;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -26,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
+@Log4j2
 public class OrderService {
 
     @Autowired
@@ -86,6 +90,7 @@ public class OrderService {
         order.setPaymentStatus(PaymentStatus.INITIAL);
         order.setSum(orderSum);
         Person person = personRepository.findById(personCode).get();
+        log.info(person);
         order.setPerson(person);
         Order newOrder = orderRepository.save(order);
         return newOrder.getId();
@@ -113,5 +118,36 @@ public class OrderService {
         everyPayData.setTimestamp(ZonedDateTime.now().toString());
         everyPayData.setCustomer_url(everyPayCustomerUrl);
         return  everyPayData;
+    }
+
+    public EveryPayMessage checkPaymentStatus(CheckPaymentData checkPaymentData) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = everyPayUrl + "/payments/" + checkPaymentData.getPayment_reference() + "?api_username=" + everyPayUsername;
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Basic " + everyPayAuth);
+        HttpEntity httpEntity = new HttpEntity<>(headers);
+        ResponseEntity<EveryPayMessage> response = restTemplate.exchange(url, HttpMethod.GET,httpEntity, EveryPayMessage.class);
+        return response.getBody();
+    }
+
+    public void changeOrderPaymentStatus(EveryPayMessage everyPayMessage, Long orderId) {
+        if (orderRepository.findById(orderId).isPresent()) {
+            Order order = orderRepository.findById(orderId).get();
+            switch (everyPayMessage.getPayment_state()) {
+                case "settled":
+                    order.setPaymentStatus(PaymentStatus.SETTLED);
+                    break;
+                case "failed":
+                    order.setPaymentStatus(PaymentStatus.FAILED);
+                    break;
+                case "abandoned":
+                    order.setPaymentStatus(PaymentStatus.ABANDONED);
+                    break;
+                case "voided":
+                    order.setPaymentStatus(PaymentStatus.VOIDED);
+                    break;
+            }
+            orderRepository.save(order);
+        }
     }
 }
