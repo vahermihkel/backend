@@ -44,6 +44,7 @@ public class ProductController {
     @DeleteMapping("products/{id}")  // localhost:8080/products/0   DELETE
     public List<Product> deleteProduct(@PathVariable Long id) {
         productRepository.deleteById(id);
+        productCache.emptyCache();
         return productRepository.findAll();
     }
 
@@ -57,6 +58,7 @@ public class ProductController {
 
             // {id: 1, name: "Fanta", price: 2}
             productRepository.save(product);
+            productCache.emptyCache();
         }
     }
 

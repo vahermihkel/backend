@@ -31,4 +31,8 @@ public class ProductCache {
     public Product getProduct(Long id) throws ExecutionException {
         return productLoadingCache.get(id);
     }
+
+    public void emptyCache() {
+        productLoadingCache.invalidateAll();
+    }
 }
